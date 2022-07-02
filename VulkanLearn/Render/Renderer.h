@@ -1,27 +1,54 @@
 #pragma once
 
+#define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 #include <vulkan/vulkan.h>
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
+#include <optional>
 
 
 class Renderer
 {
 public:
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+        bool IsComplete()
+        {
+            return graphicsFamily.has_value() && presentFamily.has_value();
+        }
+    };
     void Run();
 private:
     void InitVulkan();
-    void CreateWindow();
+    void CreateWin32Window();
     void Cleanup();
     void MainLoop();
     void CreateVKInstance();
     bool CheckValidationLayerSupport();
     std::vector<const char*> GetRequiredExtensions();
+
+    //surface
+    void CreateSurface();
+    
+    //logical device
+    void CreateLogicalDevice();
+    
+    //physical deveic
+    void PickPhysicalDevice();
+    bool IsPhysicalDeviceSuitable(VkPhysicalDevice device);
+    
+    //queue families
+    void FindQueueFamilies();
+    
     //get debug infomation
     void SetDebugCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& info);
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -31,10 +58,8 @@ private:
         void* userData);
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
         const VkDebugUtilsMessengerCreateInfoEXT* info,
-        const VkAllocationCallbacks* allocator,
-        VkDebugUtilsMessengerEXT debugMessenger);
+        const VkAllocationCallbacks* allocator);
     void DestoryDebugUtilsMessengerEXT(VkInstance instance,
-        VkDebugUtilsMessengerEXT debugMessenger,
         const VkAllocationCallbacks* allocator);
 private:
     //window infomation
@@ -57,4 +82,20 @@ private:
     const bool enableValidationLayers = true;
 #endif
     VkDebugUtilsMessengerEXT debugMessenger;
+
+    //physical device
+    VkPhysicalDevice physicalDevice = nullptr;
+
+    //queue families
+    QueueFamilyIndices queueFamilyIndices;
+
+    //logical device
+    VkDevice logicalDevice = nullptr;
+
+    //surface
+    VkSurfaceKHR surface = nullptr;
+
+    //queue
+    VkQueue queueGraphics = nullptr;
+    VkQueue queuePresent = nullptr;
 };
